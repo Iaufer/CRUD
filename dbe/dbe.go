@@ -1,6 +1,7 @@
-package db
+package dbe
 
 import (
+	"crud/trans"
 	"database/sql"
 	"fmt"
 )
@@ -26,7 +27,14 @@ func NewPostgresConnection(info ConnectionInfo) (*sql.DB, error) {
 		return nil, err
 	}
 
-	fmt.Println("Connected to DB PostgresSQL!")
-
 	return db, nil
+}
+
+func InsertBook(db *sql.DB, b trans.Book) error {
+	if db == nil {
+		fmt.Println("Реально нил")
+	}
+	_, err := db.Exec("insert into books (id, name, price) values ($1, $2, $3)",
+		b.ID, b.Name, b.Price)
+	return err
 }

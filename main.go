@@ -1,7 +1,9 @@
 package main
 
 import (
-	"crud/db"
+	"crud/dbe"
+	"crud/trans"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,12 +11,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func handle(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello"))
-}
+var db *sql.DB // Глобальная переменная для хранения соединения с базой данных
 
-func main() {
-	db, err := db.NewPostgresConnection(db.ConnectionInfo{
+// Инициализация соединения с базой данных
+func initDB() {
+	var err error
+	db, err = dbe.NewPostgresConnection(dbe.ConnectionInfo{
 		Host:     "127.0.0.1",
 		Port:     5432,
 		Username: "postgres",
@@ -22,21 +24,45 @@ func main() {
 		SSLMode:  "disable",
 		Password: "2505",
 	})
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer db.Close()
+	fmt.Println("Connected to database!")
+}
 
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+// Обработчик HTTP запросов
+func Handle(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		// Обработка GET запросов, если нужно
+	case http.MethodPost:
+		b, err := trans.AddBook(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = dbe.InsertBook(db, b)
+		if err != nil {
+			log.Fatal(err)
+			http.Error(w, "Failed to insert book", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
 
-	fmt.Println("SERVER STARTED")
+func main() {
+	initDB() // Инициализация базы данных при запуске приложения
 
-	http.HandleFunc("/", handle)
-	err = http.ListenAndServe(":8080", nil)
+	fmt.Println("Server started")
+
+	http.HandleFunc("/", Handle)
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal(err)
 	}
