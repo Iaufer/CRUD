@@ -4,6 +4,7 @@ import (
 	"crud/trans"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type ConnectionInfo struct {
@@ -36,5 +37,41 @@ func InsertBook(db *sql.DB, b trans.Book) error {
 	}
 	_, err := db.Exec("insert into books (id, name, price) values ($1, $2, $3)",
 		b.ID, b.Name, b.Price)
+	return err
+}
+
+func GetAllBooks(db *sql.DB) []trans.Book {
+	rows, err := db.Query("select * from books")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	books := make([]trans.Book, 0)
+
+	for rows.Next() {
+		b := trans.Book{}
+
+		err := rows.Scan(&b.ID, &b.Name, &b.Price)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		books = append(books, b)
+	}
+	err = rows.Err()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return books
+}
+
+func DeleteBook(db *sql.DB, id int) error {
+	_, err := db.Exec("delete from books where id = $1", id)
 	return err
 }

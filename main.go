@@ -35,6 +35,10 @@ func initDB() {
 func Handle(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		g := dbe.GetAllBooks(db)
+		for _, value := range g {
+			fmt.Println(value.ID, value.Name, value.Price)
+		}
 		// Обработка GET запросов, если нужно
 	case http.MethodPost:
 		b, err := trans.AddBook(w, r)
@@ -48,6 +52,17 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 			http.Error(w, "Failed to insert book", http.StatusInternalServerError)
 			return
+		}
+
+	case http.MethodDelete:
+		id := 0
+		fmt.Println("Введите id книги: ")
+		fmt.Scanln(&id)
+
+		err := dbe.DeleteBook(db, id)
+
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		w.WriteHeader(http.StatusCreated)
