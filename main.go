@@ -11,9 +11,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB // Глобальная переменная для хранения соединения с базой данных
+var db *sql.DB
 
-// Инициализация соединения с базой данных
 func initDB() {
 	var err error
 	db, err = dbe.NewPostgresConnection(dbe.ConnectionInfo{
@@ -31,7 +30,6 @@ func initDB() {
 	fmt.Println("Connected to database!")
 }
 
-// Обработчик HTTP запросов
 func Handle(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -39,7 +37,6 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		for _, value := range g {
 			fmt.Println(value.ID, value.Name, value.Price)
 		}
-		// Обработка GET запросов, если нужно
 	case http.MethodPost:
 		b, err := trans.AddBook(w, r)
 		if err != nil {
@@ -72,7 +69,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	initDB() // Инициализация базы данных при запуске приложения
+	initDB()
 
 	fmt.Println("Server started")
 
